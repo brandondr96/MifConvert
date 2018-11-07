@@ -6,24 +6,23 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import javax.imageio.ImageIO;
-
 import javafx.application.Application;
-import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
-import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public class ImageConverter extends Application {
 	private static final Paint bg = Color.AZURE;
+	private static final Paint fn = Color.YELLOW;
+	private Button fileLoad;
 	
+	/**
+	 * Sets the stage for the converter
+	 */
 	public void start (Stage stage) {
 		Scene converterScene = makeScene();
 		stage.setScene(converterScene);
@@ -31,8 +30,12 @@ public class ImageConverter extends Application {
 		stage.show();
 	}
 	
+	/**
+	 * Sets the scene and button for the converter
+	 * @return The completed scene
+	 */
 	private Scene makeScene() {
-		Button fileLoad = new Button("Choose Image");
+		fileLoad = new Button("Choose Image");
 		Scene toReturn = new Scene(fileLoad, 400, 40, bg);
 		fileLoad.setPrefWidth(400);
 		fileLoad.setPrefHeight(40);
@@ -44,14 +47,22 @@ public class ImageConverter extends Application {
 		return toReturn;
 	}
 	
+	/**
+	 * Checks to ensure that the file chosen is valid
+	 */
 	private void initiate() {
 		File toConvert = getFile();
 		if(!(toConvert == null)) {
+			fileLoad.setText("Loading...");
 			BufferedImage image = getImage(toConvert);
-			convert(image);
+			convert(image, 1);
 		}
 	}
 	
+	/**
+	 * Opens the file chooser for the user
+	 * @return Desired user file
+	 */
 	private File getFile() {
 		FileChooser fileChooser = new FileChooser();
 		fileChooser.setTitle("Choose Game File");
@@ -60,6 +71,11 @@ public class ImageConverter extends Application {
 		return file;
 	}
 	
+	/**
+	 * Converts the file into the image for processing
+	 * @param file The input file
+	 * @return The image
+	 */
 	private BufferedImage getImage(File file) {
 		BufferedImage img = null;
 		try {
@@ -69,7 +85,12 @@ public class ImageConverter extends Application {
 		return img;
 	}
 	
-	private void convert(BufferedImage toConvert) {
+	/**
+	 * Converts the image into the data and index arrays for color values
+	 * @param toConvert The input image
+	 * @param n The initial conversion factor for the colors
+	 */
+	private void convert(BufferedImage toConvert, int n) {
 		ArrayList<String> colors = new ArrayList<String>();
 		ArrayList<String> pixels = new ArrayList<String>();
 		for (int y=0; y<toConvert.getHeight(); y++) {
@@ -80,16 +101,25 @@ public class ImageConverter extends Application {
                 Integer blue = iso & 0x0000ff;
                 //ROUNDING HERE
                 //65536  //255
-      
-                //iso = iso-iso%65536;		//Rough functionality
                 
-//                red = red-red%41;
-//                green = green-green%41;
-//                blue = blue-blue%41;
-                
-                red = red-red%30;
-                green = green-green%30;
-                blue = blue-blue%30;
+                if(red%n<n/2) {
+                	red = red-red%n;
+                }
+                else {
+                	red = red+(n-red%n);
+                }
+                if(green%n<n/2) {
+                	green = green-green%n;
+                }
+                else {
+                	green = green+(n-green%n);
+                }
+                if(blue%n<n/2) {
+                	blue = blue-blue%n;
+                }
+                else {
+                	blue = blue+(n-blue%n);
+                }
                 iso = (red << 16)+(green << 8)+blue;
                 
                 //END ROUNDING
@@ -101,36 +131,45 @@ public class ImageConverter extends Application {
                 pixels.add(loc.toString());
             }
         }
-		// Create imgdata array
-		ArrayList<String> toData = new ArrayList<String>();
-		setFormat(toData);
-		int fin = 0;
-		for (int i=0;i<pixels.size();i++) {
-			toData.add(""+i+" : "+pixels.get(i)+";");
-			fin = i;
+		if(colors.size()>256) {
+			convert(toConvert, n+1);
 		}
-		fin++;
-		if(fin<307199) {
-			toData.add("["+fin+"..307199] : 0;");
+		else {
+			// Create imgdata array
+			ArrayList<String> toData = new ArrayList<String>();
+			setFormat(toData);
+			int fin = 0;
+			for (int i=0;i<pixels.size();i++) {
+				toData.add(""+i+" : "+pixels.get(i)+";");
+				fin = i;
+			}
+			fin++;
+			if(fin<307199) {
+				toData.add("["+fin+"..307199] : 0;");
+			}
+			toData.add("END;");
+			
+			// Create imgindex array
+			ArrayList<String> toIndex = new ArrayList<String>();
+			setFormat(toIndex);
+			fin = 0;
+			for (int i=0;i<colors.size();i++) {
+				toIndex.add(""+i+" : "+colors.get(i)+";");
+				fin = i;
+			}
+			fin++;
+			if(fin<307199) {
+				toData.add("["+fin+"..307199] : 0;");
+			}
+			toIndex.add("END;");		
+			writeFile(toData, toIndex);
 		}
-		toData.add("END;");
-		
-		// Create imgindex array
-		ArrayList<String> toIndex = new ArrayList<String>();
-		setFormat(toIndex);
-		fin = 0;
-		for (int i=0;i<colors.size();i++) {
-			toIndex.add(""+i+" : "+colors.get(i)+";");
-			fin = i;
-		}
-		fin++;
-		if(fin<307199) {
-			toData.add("["+fin+"..307199] : 0;");
-		}
-		toIndex.add("END;");		
-		writeFile(toData, toIndex);
 	}
 	
+	/**
+	 * Adds the correct formatting for the .mif file
+	 * @param list The current array of data to be printed
+	 */
 	private void setFormat(ArrayList<String> list) {
 		list.add("WIDTH=24;");
 		list.add("DEPTH=307200;");
@@ -139,12 +178,18 @@ public class ImageConverter extends Application {
 		list.add("CONTENT BEGIN");
 	}
 	
+	/**
+	 * Write the desired data into the .mif files
+	 * @param toData The image data array
+	 * @param toIndex The image index array
+	 */
 	private void writeFile(ArrayList<String> toData, ArrayList<String> toIndex) {
 		// Write first file
 		Path file1 = Paths.get("imgdata.mif");
 		try {
 			Files.write(file1, toData, Charset.forName("UTF-8"));
 		} catch (IOException e) {
+			//Handle exception
 		}
 		
 		// Write second file
@@ -152,18 +197,27 @@ public class ImageConverter extends Application {
 		try {
 			Files.write(file2, toIndex, Charset.forName("UTF-8"));
 		} catch (IOException e) {
+			//Handle exception
 		}
 		finale();
 	}
 	
+	/**
+	 * Notify the user that the file has been successfully converted
+	 */
 	private void finale() {
+		fileLoad.setText("Choose Image");
 		Stage nstage = new Stage();
 		Button text = new Button("DONE :)");
-		Scene tscene = new Scene(text,200,200,bg);
+		Scene tscene = new Scene(text,200,200,fn);
 		nstage.setScene(tscene);
 		nstage.show();
 	}
 	
+	/**
+	 * Main function for the program
+	 * @param args
+	 */
 	public static void main (String[] args) {
         launch(args);
     }
