@@ -75,10 +75,24 @@ public class ImageConverter extends Application {
 		for (int y=0; y<toConvert.getHeight(); y++) {
             for (int x=0; x<toConvert.getWidth(); x++) {
                 Integer iso = toConvert.getRGB(x, y);
-//                Integer red = (iso & 0x00ff0000) >> 16;
-//                Integer green = (iso & 0x0000ff00) >> 8;
-//                Integer blue = iso & 0x000000ff;
+                Integer red = (iso & 0xff0000) >> 16;
+                Integer green = (iso & 0x00ff00) >> 8;
+                Integer blue = iso & 0x0000ff;
                 //ROUNDING HERE
+                //65536  //255
+      
+                //iso = iso-iso%65536;		//Rough functionality
+                
+//                red = red-red%41;
+//                green = green-green%41;
+//                blue = blue-blue%41;
+                
+                red = red-red%30;
+                green = green-green%30;
+                blue = blue-blue%30;
+                iso = (red << 16)+(green << 8)+blue;
+                
+                //END ROUNDING
                 String ncolor = iso.toString();
                 if(!colors.contains(ncolor)) {
                 	colors.add(ncolor);
@@ -118,7 +132,7 @@ public class ImageConverter extends Application {
 	}
 	
 	private void setFormat(ArrayList<String> list) {
-		list.add("WIDTH=8;");
+		list.add("WIDTH=24;");
 		list.add("DEPTH=307200;");
 		list.add("ADDRESS_RADIX=UNS;");
 		list.add("DATA_RADIX=DEC;");
