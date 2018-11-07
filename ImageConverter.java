@@ -18,12 +18,13 @@ import javafx.stage.Stage;
 public class ImageConverter extends Application {
 	private static final Paint bg = Color.AZURE;
 	private static final Paint fn = Color.YELLOW;
-	private Button fileLoad;
+	private Stage mstage;
 	
 	/**
 	 * Sets the stage for the converter
 	 */
 	public void start (Stage stage) {
+		mstage = stage;
 		Scene converterScene = makeScene();
 		stage.setScene(converterScene);
 		stage.setTitle("Mif Convert");
@@ -35,7 +36,7 @@ public class ImageConverter extends Application {
 	 * @return The completed scene
 	 */
 	private Scene makeScene() {
-		fileLoad = new Button("Choose Image");
+		Button fileLoad = new Button("Choose Image");
 		Scene toReturn = new Scene(fileLoad, 400, 40, bg);
 		fileLoad.setPrefWidth(400);
 		fileLoad.setPrefHeight(40);
@@ -53,7 +54,7 @@ public class ImageConverter extends Application {
 	private void initiate() {
 		File toConvert = getFile();
 		if(!(toConvert == null)) {
-			fileLoad.setText("Loading...");
+			mstage.setTitle("Loading...");
 			BufferedImage image = getImage(toConvert);
 			convert(image, 1);
 		}
@@ -206,10 +207,10 @@ public class ImageConverter extends Application {
 	 * Notify the user that the file has been successfully converted
 	 */
 	private void finale() {
-		fileLoad.setText("Choose Image");
+		mstage.setTitle("Mif Convert");
 		Stage nstage = new Stage();
 		Button text = new Button("DONE :)");
-		Scene tscene = new Scene(text,200,200,fn);
+		Scene tscene = new Scene(text,200,100,fn);
 		nstage.setScene(tscene);
 		nstage.show();
 	}
