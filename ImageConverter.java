@@ -121,7 +121,7 @@ public class ImageConverter extends Application {
                 else {
                 	blue = blue+(n-blue%n);
                 }
-                iso = (red << 16)+(green << 8)+blue;
+                iso = (blue << 16)+(green << 8)+red;
                 
                 //END ROUNDING
                 String ncolor = iso.toString();
