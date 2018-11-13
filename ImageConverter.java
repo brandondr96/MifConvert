@@ -19,6 +19,9 @@ public class ImageConverter extends Application {
 	private static final Paint bg = Color.AZURE;
 	private static final Paint fn = Color.YELLOW;
 	private Stage mstage;
+	private int givenWidth;
+	private int givenHeight;
+	private int pixelNum;
 	
 	/**
 	 * Sets the stage for the converter
@@ -94,8 +97,11 @@ public class ImageConverter extends Application {
 	private void convert(BufferedImage toConvert, int n) {
 		ArrayList<String> colors = new ArrayList<String>();
 		ArrayList<String> pixels = new ArrayList<String>();
-		for (int y=0; y<toConvert.getHeight(); y++) {
-            for (int x=0; x<toConvert.getWidth(); x++) {
+		givenWidth = toConvert.getWidth();
+		givenHeight = toConvert.getHeight();
+		pixelNum = givenWidth*givenHeight-1;
+		for (int y=0; y<givenHeight; y++) {
+            for (int x=0; x<givenWidth; x++) {
                 Integer iso = toConvert.getRGB(x, y);
                 Integer red = (iso & 0xff0000) >> 16;
                 Integer green = (iso & 0x00ff00) >> 8;
@@ -145,8 +151,8 @@ public class ImageConverter extends Application {
 				fin = i;
 			}
 			fin++;
-			if(fin<307199) {
-				toData.add("["+fin+"..307199] : 0;");
+			if(fin<pixelNum) {
+				toData.add("["+fin+".."+pixelNum+"] : 0;");
 			}
 			toData.add("END;");
 			
@@ -159,8 +165,8 @@ public class ImageConverter extends Application {
 				fin = i;
 			}
 			fin++;
-			if(fin<307199) {
-				toData.add("["+fin+"..307199] : 0;");
+			if(fin<pixelNum) {
+				toIndex.add("["+fin+".."+pixelNum+"] : 0;");
 			}
 			toIndex.add("END;");		
 			writeFile(toData, toIndex);
@@ -173,7 +179,7 @@ public class ImageConverter extends Application {
 	 */
 	private void setFormat(ArrayList<String> list) {
 		list.add("WIDTH=24;");
-		list.add("DEPTH=307200;");
+		list.add("DEPTH="+(pixelNum+1)+";");
 		list.add("ADDRESS_RADIX=UNS;");
 		list.add("DATA_RADIX=DEC;");
 		list.add("CONTENT BEGIN");
